@@ -1332,6 +1332,190 @@ function StoryCardStack({
   )
 }
 
+const SUMMARY_BRIEFING =
+  'Here is what your agents found today. The main signal is whether the AI industry is ready to slow down. Anthropic wants to pace the frontier, and industry leaders are still divided. Hardware is moving beyond the screen, humanoid robots are entering factories, and the next phone upgrade may be mostly invisible. Smaller teams are building faster, clinical copilots are facing real use, and one research result could make private models easier to deploy. You are caught up.'
+
+const WAVE_REST = Array.from({ length: 58 }, (_, index) => {
+  if (index < 33) return 0.25
+  const shape = [0.25, 0.5, 0.62, 0.38, 0.88, 0.75, 0.38, 0.25, 0.38, 0.62, 0.38, 0.62, 0.38, 0.25, 0.25, 0.5, 0.62, 0.38, 0.62, 0.88, 0.38, 0.25, 0.25, 0.38, 0.75, 1, 0.38]
+  return shape[(index - 33) % shape.length]
+})
+
+function preferredVoice() {
+  const voices = window.speechSynthesis.getVoices()
+  return (
+    voices.find((voice) => /samantha|google us english|karen|daniel/i.test(voice.name))
+    ?? voices.find((voice) => /^en/i.test(voice.lang))
+  )
+}
+
+function SummaryScreen({
+  agent,
+  onClose,
+}: {
+  agent: Agent
+  onClose: () => void
+}) {
+  const [phase, setPhase] = useState<'speaking' | 'paused' | 'ended'>('speaking')
+  const barsRef = useRef<Array<HTMLSpanElement | null>>([])
+  const voiceGeneration = useRef(0)
+  const onCloseRef = useRef(onClose)
+  const reduceMotion = useReducedMotion()
+  const live = phase === 'speaking'
+  onCloseRef.current = onClose
+
+  const speak = () => {
+    const generation = voiceGeneration.current + 1
+    voiceGeneration.current = generation
+
+    if (!('speechSynthesis' in window)) {
+      setPhase('speaking')
+      window.setTimeout(() => {
+        if (voiceGeneration.current === generation) setPhase('ended')
+      }, 14000)
+      return
+    }
+
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(SUMMARY_BRIEFING)
+    utterance.rate = 0.98
+    utterance.pitch = 1
+    const voice = preferredVoice()
+    if (voice) utterance.voice = voice
+    utterance.onstart = () => {
+      if (voiceGeneration.current === generation) setPhase('speaking')
+    }
+    utterance.onend = () => {
+      if (voiceGeneration.current !== generation) return
+      setPhase((current) => (current === 'paused' ? current : 'ended'))
+    }
+    utterance.onerror = () => {
+      if (voiceGeneration.current === generation) setPhase('ended')
+    }
+    window.speechSynthesis.speak(utterance)
+    setPhase('speaking')
+  }
+
+  useEffect(() => {
+    const start = () => speak()
+    if (!('speechSynthesis' in window)) {
+      start()
+    } else if (window.speechSynthesis.getVoices().length) {
+      start()
+    } else {
+      window.speechSynthesis.addEventListener('voiceschanged', start, { once: true })
+    }
+
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') onCloseRef.current()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      voiceGeneration.current += 1
+      window.speechSynthesis?.cancel()
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [])
+
+  useEffect(() => {
+    const paint = (scale: (index: number, time: number) => number, time = 0) => {
+      barsRef.current.forEach((bar, index) => {
+        if (bar) bar.style.transform = `scaleY(${scale(index, time)})`
+      })
+    }
+
+    if (!live || reduceMotion) {
+      paint((index) => WAVE_REST[index])
+      return
+    }
+
+    let frame = 0
+    const tick = (time: number) => {
+      paint((index) => {
+        const pulse = Math.abs(Math.sin(time / 170 + index * 0.48))
+        const energy = 0.22 + pulse * (0.28 + (index / WAVE_REST.length) * 0.7)
+        return Math.max(WAVE_REST[index], energy)
+      }, time)
+      frame = window.requestAnimationFrame(tick)
+    }
+    frame = window.requestAnimationFrame(tick)
+    return () => window.cancelAnimationFrame(frame)
+  }, [live, reduceMotion])
+
+  const toggleVoice = () => {
+    if (!('speechSynthesis' in window)) {
+      setPhase((current) => (current === 'speaking' ? 'paused' : 'speaking'))
+      return
+    }
+
+    if (phase === 'speaking') {
+      window.speechSynthesis.pause()
+      setPhase('paused')
+      return
+    }
+
+    if (phase === 'paused' && window.speechSynthesis.paused) {
+      window.speechSynthesis.resume()
+      setPhase('speaking')
+      return
+    }
+
+    speak()
+  }
+
+  return (
+    <motion.section
+      className="summary-screen"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="summary-title"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: reduceMotion ? 0 : 0.28 }}
+    >
+      <StatusBar />
+      <h1 id="summary-title">Summary</h1>
+      <p className="summary-transcript">{SUMMARY_BRIEFING}</p>
+      <button className="summary-close" type="button" onClick={onClose} aria-label="Close summary">
+        <img src="/assets/ask-close.svg" alt="" />
+      </button>
+      <img
+        className={`summary-orb${live ? ' is-speaking' : ''}`}
+        src={agent.background}
+        alt=""
+      />
+      <div className="summary-bar">
+        <button className="summary-round" type="button" onClick={speak} aria-label="Replay summary">
+          <img src="/assets/summary-plus.svg" alt="" />
+        </button>
+        <div className={`summary-waveform${live ? ' is-live' : ''}`} aria-hidden="true">
+          <img src="/assets/summary-waveform.svg" alt="" />
+          <span className="summary-waveform-live">
+            {WAVE_REST.map((_, index) => (
+              <span
+                key={index}
+                ref={(node) => {
+                  barsRef.current[index] = node
+                }}
+              />
+            ))}
+          </span>
+        </div>
+        <button
+          className="summary-round"
+          type="button"
+          aria-pressed={live}
+          aria-label={phase === 'speaking' ? 'Pause voice' : 'Play voice'}
+          onClick={toggleVoice}
+        >
+          <img src="/assets/summary-mic.svg" alt="" />
+        </button>
+      </div>
+    </motion.section>
+  )
+}
+
 function DiscoverPage({
   menuButtonRef,
   onMenu,
@@ -1466,6 +1650,7 @@ export default function App() {
   const [flowDirection, setFlowDirection] = useState<-1 | 1>(1)
   const [menuOpen, setMenuOpen] = useState(false)
   const [askOpen, setAskOpen] = useState(false)
+  const [summaryOpen, setSummaryOpen] = useState(false)
   const [askSeed, setAskSeed] = useState<string | undefined>()
   const [storyOpen, setStoryOpen] = useState(false)
   const [orbLanded, setOrbLanded] = useState(false)
@@ -1638,10 +1823,7 @@ export default function App() {
             <button
               className="summarize-button"
               type="button"
-              onClick={() => {
-                setAskSeed('Summarize everything you found for me today.')
-                setAskOpen(true)
-              }}
+              onClick={() => setSummaryOpen(true)}
             >
               <span className="summarize-icon">
                 <img src="/assets/summarize.svg" alt="" />
@@ -1706,6 +1888,15 @@ export default function App() {
               }}
             />
           )}
+
+          <AnimatePresence>
+            {summaryOpen && (
+              <SummaryScreen
+                agent={selectedAgent}
+                onClose={() => setSummaryOpen(false)}
+              />
+            )}
+          </AnimatePresence>
 
           <AnimatePresence>
             {askOpen && (
