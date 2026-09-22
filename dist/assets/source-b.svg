@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Frame 22">
+<circle id="Ellipse 33" cx="10" cy="10" r="9.5" fill="black" stroke="white"/>
+<g id="Bloomberg.com logo" clip-path="url(#clip0_0_37)">
+<path id="Vector" d="M6.64162 6H10.5722C11.3122 6 11.8901 6.185 12.2947 6.50875C12.7456 6.87875 13 7.43375 13 8.0925C13 8.8555 12.6879 9.341 12.052 9.63V9.66462C12.8845 9.94212 13.3583 10.6821 13.3583 11.5837C13.3583 12.4392 13.0333 13.1098 12.4913 13.5144C12.0404 13.8394 11.4393 13.9999 10.6531 13.9999H6.65312V5.99988L6.64162 6ZM10.1791 9.133C10.6069 9.133 10.9075 8.90175 10.9075 8.42775C10.9075 7.97688 10.5825 7.74563 10.1675 7.74563H8.815V9.12137H10.1791V9.133ZM10.3756 12.2312C10.8496 12.2312 11.2081 11.9423 11.2081 11.4105C11.2081 10.8555 10.8266 10.5897 10.3644 10.5897H8.815V12.2314L10.3756 12.2312Z" fill="white"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_0_37">
+<rect width="8" height="8" fill="white" transform="translate(6 6)"/>
+</clipPath>
+</defs>
+</svg>

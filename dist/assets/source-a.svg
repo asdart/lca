@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Frame 23">
+<circle id="Ellipse 34" cx="10" cy="10" r="9.5" fill="white" stroke="white"/>
+<g id="BuzzFeed logo" clip-path="url(#clip0_0_33)">
+<path id="Vector" fill-rule="evenodd" clip-rule="evenodd" d="M19 10C19 14.9703 14.9703 19 10 19C5.02975 19 1 14.9703 1 10C1 5.02975 5.02975 1 10 1C14.9703 1 19 5.02975 19 10ZM15.8894 9.79525L15.1559 4.58987L10.2812 6.5575L12.2129 7.67125L10.387 10.8325L7.22575 9.00775L4.1095 14.4032L5.8555 15.4113L7.96375 11.7606L11.125 13.5854L13.9577 8.68038L15.8894 9.79412V9.79525Z" fill="#EE3322"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_0_33">
+<rect width="18" height="18" fill="white" transform="translate(1 1)"/>
+</clipPath>
+</defs>
+</svg>
