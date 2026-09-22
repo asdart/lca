@@ -1370,7 +1370,7 @@ function SummaryScreen({
 
     if (!('speechSynthesis' in window)) {
       setPhase('speaking')
-      window.setTimeout(() => {
+      setTimeout(() => {
         if (voiceGeneration.current === generation) setPhase('ended')
       }, 14000)
       return
